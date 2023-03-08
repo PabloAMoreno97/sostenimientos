@@ -34,7 +34,7 @@ def actualizarRutinas():
     Vehiculo.objects.all().delete()
     actualizarArticulos()
     efRutinas = pd.ExcelFile(
-        'D:/Estudio/Proyecto_Ultron/archivos_excel/rutinas.xlsx')
+        'archivos_excel/rutinas.xlsx')
     lista_vehiculos = efRutinas.sheet_names
     lista_articulos = Articulo.objects.all()
     lista_rutinas = listarRutinas()

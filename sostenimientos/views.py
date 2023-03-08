@@ -91,7 +91,7 @@ def actualizarSostenimientos():
     eanesConGrupo = list(dfGrupo.iloc[:, 0])
     gruposEan = list(dfGrupo.iloc[:, 1])
     efSostenimientos = pd.ExcelFile(
-        'D:/Estudio/Proyecto_Ultron/archivos_excel/FOFON.xls')
+        'archivos_excel/FOFON.xls')
     sostenimientos = efSostenimientos.parse('ReporteCambioPrecio')
     sostenimientos = sostenimientos[~sostenimientos.iloc[:, 1].isna()]
     sostenimientos.columns = list(sostenimientos.iloc[0])
