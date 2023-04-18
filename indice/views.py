@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from sostenimientos.views import actualizarSostenimientos, justificarSostenimientos
+from sostenimientos.views import actualizarSostenimientos, justificarSostenimientos, UNIDADES
 from sostenimientos.models import Sostenimiento
 from rutinas.views import actualizarRutinas
 from descuentoCSA.views import actualizarCSA
@@ -88,12 +88,14 @@ def actualizar_todo(request):
 
 
 def generar_informe(request):
+    print("*** Inicio de generación de informe ***")
     lista_sostenimientos = Sostenimiento.objects.all()
     informe = openpyxl.Workbook()
     hoja = informe.active
-    hoja.append(("Cajero", "Fecha", "Factura", "Cliente", "Nombre Cliente", "Observacion", "EAN",
+    hoja.append(("Cajero", "unidadNegocio", "Fecha", "Factura", "Cliente", "Nombre Cliente", "Observacion", "EAN",
                 "Descripción", "Cantidad", "Precio Inicial", "Descuento", "Precio Final", "Justificación"))
     for sostenimiento in lista_sostenimientos:
+        unidadNegocio = sostenimiento.articulo.factura.unidadNegocio
         cajero = sostenimiento.articulo.factura.cajero
         fecha = sostenimiento.articulo.factura.fecha
         factura = sostenimiento.articulo.factura.numero
@@ -107,7 +109,7 @@ def generar_informe(request):
         descuento = sostenimiento.articulo.descuento
         precioFinal = sostenimiento.articulo.precioFinal
         justificacion = sostenimiento.justificacion
-        hoja.append((cajero, fecha, factura, cliente, nombreCliente, observacion, ean, descripcion,
+        hoja.append((cajero, unidadNegocio, fecha, factura, cliente, nombreCliente, observacion, ean, descripcion,
                     cantidad, precioInicial, descuento, precioFinal, justificacion))
 
     response = HttpResponse(content_type='application/msexcel')

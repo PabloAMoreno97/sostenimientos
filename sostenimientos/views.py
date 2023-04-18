@@ -19,6 +19,19 @@ from descuentoVIP.models import Vip
 
 # Create your views here.
 
+UNIDADES = [
+    'FOA68',
+    'FOBAR',
+    'FOBO1',
+    'FOCAL',
+    'FOFAT',
+    'FOFON',
+    'FOITA',
+    'FOMED',
+    'FOPAS',
+    'FOVIL',
+    'FOCOP'
+]
 
 def listarSostenimientos():
     return Sostenimiento.objects.all()
@@ -77,9 +90,7 @@ def visualizarSostenimientos(request, msg=""):
             'msg': msg
         })
 
-
 def actualizarSostenimientos():
-
     Sostenimiento.objects.all().delete()
     Articulo.objects.all().delete()
     Factura.objects.all().delete()
@@ -90,88 +101,93 @@ def actualizarSostenimientos():
     dfGrupo = cargarDescuentosFile('Grupo')
     eanesConGrupo = list(dfGrupo.iloc[:, 0])
     gruposEan = list(dfGrupo.iloc[:, 1])
-    efSostenimientos = pd.ExcelFile(
-        'archivos_excel/FOFON.xls')
-    sostenimientos = efSostenimientos.parse('ReporteCambioPrecio')
-    sostenimientos = sostenimientos[~sostenimientos.iloc[:, 1].isna()]
-    sostenimientos.columns = list(sostenimientos.iloc[0])
-    sostenimientos = sostenimientos.iloc[1:, 0:]
-
-    CATEGORIAS_EXCLUIDAS = ["Vehiculos", "Servicios"]
-
-    for i in range(0, sostenimientos['FECHA'].count()):
-        factura = ""
-        fecha = ""
-        tipoDocumento = ""
-        cliente = ""
-        nombreCliente = ""
-        ean = ""
-        descripcion = ""
-        observacion = ""
-        cajero = ""
-        cantidad = ""
-        precioInicial = ""
-        precioFinal = ""
-        descuento = ""
-        precioDescuento = ""
-        sostenimientoPrecio = ""
-        unidadNegocio = ""
-        promocionAplicada = ""
-        clasificacion = ""
-
-        clasificacion = sostenimientos.iloc[i, 26]
-        if clasificacion in CATEGORIAS_EXCLUIDAS:
+    for unidad in UNIDADES:
+        try:
+            efSostenimientos = pd.ExcelFile(
+                f'archivos_excel/unidades/{unidad}.xls')
+        except:
+            print('No se encontró el archivo de la unidad:', unidad)
             continue
+        sostenimientos = efSostenimientos.parse('ReporteCambioPrecio')
+        sostenimientos = sostenimientos[~sostenimientos.iloc[:, 1].isna()]
+        sostenimientos.columns = list(sostenimientos.iloc[0])
+        sostenimientos = sostenimientos.iloc[1:, 0:]
 
-        factura = sostenimientos.iloc[i, 0]
-        fechaStr = sostenimientos.iloc[i, 1]
-        fecha = datetime.strptime(fechaStr[:19], '%Y-%m-%d %H:%M:%S')
+        CATEGORIAS_EXCLUIDAS = ["Vehiculos", "Servicios"]
 
-        tipoDocumento = sostenimientos.iloc[i, 2]
-        cliente = sostenimientos.iloc[i, 3]
-        cliente = cliente[2:] if "_" in cliente else cliente
-        nombreCliente = sostenimientos.iloc[i, 4]
-        ean = int(sostenimientos.iloc[i, 5])
-        descripcion = sostenimientos.iloc[i, 6]
-        observacion = sostenimientos.iloc[i, 8]
-        cajero = sostenimientos.iloc[i, 10]
-        cantidad = sostenimientos.iloc[i, 11]
-        precioInicial = sostenimientos.iloc[i, 12]
-        precioFinal = sostenimientos.iloc[i, 13]
-        descuento = sostenimientos.iloc[i, 15]
-        precioDescuento = sostenimientos.iloc[i, 16]
-        sostenimientoPrecio = sostenimientos.iloc[i, 24]
-        unidadNegocio = sostenimientos.iloc[i, 25]
-        promocionAplicada = sostenimientos.iloc[i, 28]
+        for i in range(0, sostenimientos['FECHA'].count()):
+            factura = ""
+            fecha = ""
+            tipoDocumento = ""
+            cliente = ""
+            nombreCliente = ""
+            ean = ""
+            descripcion = ""
+            observacion = ""
+            cajero = ""
+            cantidad = ""
+            precioInicial = ""
+            precioFinal = ""
+            descuento = ""
+            precioDescuento = ""
+            sostenimientoPrecio = ""
+            unidadNegocio = ""
+            promocionAplicada = ""
+            clasificacion = ""
 
-        existeFactura = Factura.objects.filter(numero=factura).exists()
-        if not existeFactura:
-            facturaNueva = Factura(numero=factura, fecha=fecha, cajero=cajero, cliente=cliente, tipoDocumento=tipoDocumento,
-                                   nombreCliente=nombreCliente, observacion=observacion, unidadNegocio=unidadNegocio)
-            facturaNueva = Factura.objects.crear_factura(facturaNueva)
-        else:
-            facturaNueva = Factura.objects.get(numero=factura)
-
-        articuloNuevo = Articulo(ean=ean, nombre=descripcion, cantidad=cantidad, precioInicial=precioInicial, precioFinal=precioFinal,
-                                 descuento=descuento, precioDescuento=precioDescuento, sostenimientoPrecio=sostenimientoPrecio, promocionAplicada=promocionAplicada, factura=facturaNueva)
-        articuloNuevo = Articulo.objects.crear_articulo(articuloNuevo)
-
-        for identificador in lista_identificadores:
-            if str(identificador.id) in sostenimientoPrecio:
-                identificadorUsado = lista_identificadores.get(
-                    id=identificador.id)
+            clasificacion = sostenimientos.iloc[i, 26]
+            if clasificacion in CATEGORIAS_EXCLUIDAS:
                 continue
 
-        if ean in eanesConGrupo:
-            grupo = gruposEan[eanesConGrupo.index(ean)]
-            grupo = Grupo.objects.get(nombre=grupo)
-        else:
-            grupo = Grupo.objects.get(id=1)
+            factura = sostenimientos.iloc[i, 0]
+            fechaStr = sostenimientos.iloc[i, 1]
+            fecha = datetime.strptime(fechaStr[:19], '%Y-%m-%d %H:%M:%S')
 
-        sostenimiento = Sostenimiento(
-            articulo=articuloNuevo, justificacion="Sin justificación", identificador=identificadorUsado, grupo=grupo)
-        sostenimiento = Sostenimiento.objects.crear_sostenimiento(
-            sostenimiento)
+            tipoDocumento = sostenimientos.iloc[i, 2]
+            cliente = sostenimientos.iloc[i, 3]
+            cliente = cliente[2:] if "_" in cliente else cliente
+            nombreCliente = sostenimientos.iloc[i, 4]
+            ean = int(sostenimientos.iloc[i, 5])
+            descripcion = sostenimientos.iloc[i, 6]
+            observacion = sostenimientos.iloc[i, 8]
+            cajero = sostenimientos.iloc[i, 10]
+            cantidad = sostenimientos.iloc[i, 11]
+            precioInicial = sostenimientos.iloc[i, 12]
+            precioFinal = sostenimientos.iloc[i, 13]
+            descuento = sostenimientos.iloc[i, 15]
+            precioDescuento = sostenimientos.iloc[i, 16]
+            sostenimientoPrecio = sostenimientos.iloc[i, 24]
+            unidadNegocio = sostenimientos.iloc[i, 25]
+            promocionAplicada = sostenimientos.iloc[i, 28]
+
+            existeFactura = Factura.objects.filter(numero=factura).exists()
+            if not existeFactura:
+                facturaNueva = Factura(numero=factura, fecha=fecha, cajero=cajero, cliente=cliente, tipoDocumento=tipoDocumento,
+                                    nombreCliente=nombreCliente, observacion=observacion, unidadNegocio=unidadNegocio)
+                facturaNueva = Factura.objects.crear_factura(facturaNueva)
+            else:
+                facturaNueva = Factura.objects.get(numero=factura)
+
+            articuloNuevo = Articulo(ean=ean, nombre=descripcion, cantidad=cantidad, precioInicial=precioInicial, precioFinal=precioFinal,
+                                    descuento=descuento, precioDescuento=precioDescuento, sostenimientoPrecio=sostenimientoPrecio, promocionAplicada=promocionAplicada, factura=facturaNueva)
+            articuloNuevo = Articulo.objects.crear_articulo(articuloNuevo)
+
+            for identificador in lista_identificadores:
+                if str(identificador.id) in sostenimientoPrecio:
+                    identificadorUsado = lista_identificadores.get(
+                        id=identificador.id)
+                    continue
+
+            if ean in eanesConGrupo:
+                grupo = gruposEan[eanesConGrupo.index(ean)]
+                grupo = Grupo.objects.get(nombre=grupo)
+            else:
+                grupo = Grupo.objects.get(id=1)
+
+            sostenimiento = Sostenimiento(
+                articulo=articuloNuevo, justificacion="Sin justificación", identificador=identificadorUsado, grupo=grupo)
+            sostenimiento = Sostenimiento.objects.crear_sostenimiento(
+                sostenimiento)
 
 
 def actualizarSostenimientosRedirect(request):
